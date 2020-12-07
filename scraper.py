@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import pytesseract
 from PIL import Image
+import PIL.ImageOps
 from twilio.rest import Client
 from datetime import datetime
 
@@ -36,25 +37,32 @@ canvas_png = Image.open('canvas.png').convert('L')
 width, height = canvas_png.size
 
 #coordinates used to cut the fragment with numbers from canvas
-left = 150
+left = 120
 top = 50
 right = 260
 bottom = 130
 
-croppedCanvas = canvas_png.crop((140, top, right, bottom))
-level = pytesseract.image_to_string(croppedCanvas, config='--psm 8 --oem 3 -c tessedit_char_whitelist=0123456789')
+croppedCanvas = canvas_png.crop((left, top, right, bottom))
+croppedInverted = PIL.ImageOps.invert(croppedCanvas)
 
-if int(level) < 30:
+level = pytesseract.image_to_string(croppedInverted, config='--psm 13 --oem 3 -c tessedit_char_whitelist=0123456789')
+
+#getting just the first line of str level. For whatever reason pytesseract sometimes adds '/n' to the numbers
+level.split('\n', 1)[0]
+
+status = ' W porządku'
+
+if int(level) <= 20:
+    status = ' ALARM'
     message = "ALARM \nKończy się pellet\nPoziom paliwa: {}%!".format(int(level))
     client = Client("ACCOUNTSID", "AUTHTOKEN")
     client.messages.create(to="RECIPIENTNUMBER", 
                        from_="SENDERNUMBER", 
                        body=message)
 
-
 #Logging the fuel level check to a text file
 file = open('log.txt', 'a')
 timestamp = datetime.now().strftime("%m/%d/%Y, %H:%M:%S")
-logMessage = " Poziom paliwa: {}%".format(int(level))
+logMessage = " Poziom paliwa: {}%".format(int(level)) + status
 file.write('\n' + timestamp + logMessage)
 file.close()
