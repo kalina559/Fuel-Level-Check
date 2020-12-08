@@ -37,7 +37,7 @@ canvas_png = Image.open('canvas.png').convert('L')
 width, height = canvas_png.size
 
 #coordinates used to cut the fragment with numbers from canvas
-left = 120
+left = 150 #trzeba z tym pokombinowac, bo jak 8 jest na poczatku to wariuje. 120 - liczba 3 cyfrowa, 150 - 2 cyfrowa. Może sprawdzać czy string != '00' po prostu
 top = 50
 right = 260
 bottom = 130
